@@ -1,0 +1,72 @@
+---
+title: "Análise dos Pinguins de Palmer"
+author: "Vitor de Andrade Kamimura"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+format:
+  html:
+    toc: true
+    code-fold: true
+    self-contained: true
+---
+
+```{r setup, include=FALSE}
+# Configurando o ambiente
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(palmerpenguins)
+library(dplyr)
+library(ggplot2)
+library(gt)
+library(gganimate)
+library(gifski)
+```
+
+```{r}
+# Criando uma tabela com resumo por espécie
+tabela_resumo <- penguins %>%
+  group_by(species) %>%
+  summarise(
+    n = n(),
+    mean_bill_length = mean(bill_length_mm, na.rm = TRUE),
+    mean_body_mass = mean(body_mass_g, na.rm = TRUE)
+  ) %>%
+  gt() %>%
+  tab_header(
+    title = "Resumo das Espécies de Pinguins",
+    subtitle = "Dados médios de características"
+  ) %>%
+  fmt_number(
+    columns = vars(mean_bill_length, mean_body_mass),
+    decimals = 2
+  )
+tabela_resumo
+```
+
+```{r}
+# Visualizando comprimento do bico por espécie
+ggplot(penguins, aes(x = species, y = bill_length_mm, fill = species)) +
+  geom_boxplot() +
+  labs(
+    title = "Comprimento do Bico por Espécie",
+    x = "Espécie",
+    y = "Comprimento do Bico (mm)"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# Criando a animação
+plot_animado <- ggplot(penguins, aes(x = body_mass_g, y = bill_length_mm, color = species)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE, aes(color = species)) +
+  labs(
+    title = "Relação entre Massa Corporal e Comprimento do Bico",
+    x = "Massa Corporal (g)",
+    y = "Comprimento do Bico (mm)"
+  ) +
+  transition_states(species, transition_length = 0.5, state_length = 0.5) +
+  theme_minimal()
+
+plot_animado
+
+#anim_save("penguins_animation.gif", animate(plot_animado, renderer = gifski_renderer()))
+```
